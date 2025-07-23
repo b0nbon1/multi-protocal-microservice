@@ -1,0 +1,132 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+
+  postgres:
+    image: postgres:16.9
+    environment:
+      POSTGRES_DB: microservices_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  mongodb:
+    image: mongo:6
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  # API Gateway (HTTP/REST + WebSocket)
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "3000:3000"
+    depends_on:
+      - user-service
+      - order-service
+      - notification-service
+    environment:
+      - USER_SERVICE_URL=http://user-service:3001
+      - ORDER_SERVICE_URL=http://order-service:3002
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3003
+      - JWT_SECRET=keep-this-in-env-future
+
+  # User Service (HTTP/REST + Redis)
+  user-service:
+    build: ./user-service
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - DATABASE_URL=postgres://admin:admin123@postgres:5432/microservices_db?sslmode=disable
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-secret-key
+
+  # Order Service (HTTP/REST + gRPC Client + Message Queue)
+  order-service:
+    build: ./order-service
+    ports:
+      - "3002:3002"
+    depends_on:
+      - postgres
+      - rabbitmq
+      - inventory-service
+    environment:
+      - DATABASE_URL=postgres://admin:admin123@postgres:5432/microservices_db?sslmode=disable
+      - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672/
+      - INVENTORY_GRPC_URL=inventory-service:50051
+
+  # Inventory Service (gRPC Server)
+  inventory-service:
+    build: ./inventory-service
+    ports:
+      - "50051:50051"
+    depends_on:
+      - postgres
+    environment:
+      - DATABASE_URL=postgres://admin:admin123@postgres:5432/microservices_db?sslmode=disable
+
+  # Notification Service (WebSocket + Message Queue Consumer)
+  notification-service:
+    build: ./notification-service
+    ports:
+      - "3003:3003"
+    depends_on:
+      - rabbitmq
+      - mongodb
+    environment:
+      - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672/
+      - MONGODB_URL=mongodb://admin:admin123@mongodb:27017
+
+  # Analytics Service (GraphQL + Message Queue Consumer)
+  analytics-service:
+    build: ./analytics-service
+    ports:
+      - "4000:4000"
+    depends_on:
+      - rabbitmq
+      - mongodb
+    environment:
+      - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672/
+      - MONGODB_URL=mongodb://admin:admin123@mongodb:27017
+
+volumes:
+  postgres_data:

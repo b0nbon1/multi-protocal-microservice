@@ -55,4 +55,3 @@ func Fatal(msg string, fields ...zap.Field) {
 func Sync() {
 	Logger.Sync()
 }
-

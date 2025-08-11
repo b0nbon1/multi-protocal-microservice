@@ -1,63 +1,135 @@
 package database
 
 import (
-	"audit-service/internal/models"
+	"context"
 	"fmt"
 	"os"
+	"time"
 
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
-var DB *gorm.DB
+var (
+	Client         *mongo.Client
+	Database       *mongo.Database
+	LogsCollection *mongo.Collection
+)
+
+const (
+	DatabaseName       = "audit_db"
+	LogsCollectionName = "logs"
+)
 
 func Connect() error {
-	dsn := os.Getenv("DATABASE_URL")
-	if dsn == "" {
-		return fmt.Errorf("DATABASE_URL environment variable is required")
+	mongoURI := os.Getenv("MONGODB_URI")
+	if mongoURI == "" {
+		return fmt.Errorf("MONGODB_URI environment variable is required")
 	}
 
-	// Configure GORM logger
-	gormLogger := logger.Default
-	if os.Getenv("LOG_LEVEL") == "debug" {
-		gormLogger = logger.Default.LogMode(logger.Info)
-	} else {
-		gormLogger = logger.Default.LogMode(logger.Silent)
-	}
+	// Set client options
+	clientOptions := options.Client().ApplyURI(mongoURI)
 
-	var err error
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: gormLogger,
-	})
+	// Set timeouts
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Connect to MongoDB
+	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		return fmt.Errorf("failed to connect to database: %w", err)
+		return fmt.Errorf("failed to connect to MongoDB: %w", err)
 	}
 
-	// Run migrations
-	if err := migrate(); err != nil {
-		return fmt.Errorf("failed to migrate database: %w", err)
+	// Test the connection
+	if err := client.Ping(ctx, nil); err != nil {
+		return fmt.Errorf("failed to ping MongoDB: %w", err)
 	}
 
-	zap.L().Info("Connected to database successfully")
+	// Set global variables
+	Client = client
+	Database = client.Database(DatabaseName)
+	LogsCollection = Database.Collection(LogsCollectionName)
+
+	// Create indexes for better performance
+	if err := createIndexes(); err != nil {
+		return fmt.Errorf("failed to create indexes: %w", err)
+	}
+
+	zap.L().Info("Connected to MongoDB successfully",
+		zap.String("database", DatabaseName),
+		zap.String("uri", mongoURI),
+	)
+
 	return nil
 }
 
-func migrate() error {
-	return DB.AutoMigrate(
-		&models.Log{},
-	)
+func createIndexes() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	indexes := []mongo.IndexModel{
+		{
+			Keys: map[string]interface{}{
+				"userId": 1,
+			},
+		},
+		{
+			Keys: map[string]interface{}{
+				"action": 1,
+			},
+		},
+		{
+			Keys: map[string]interface{}{
+				"timestamp": -1,
+			},
+		},
+		{
+			Keys: map[string]interface{}{
+				"userId":    1,
+				"timestamp": -1,
+			},
+		},
+		{
+			Keys: map[string]interface{}{
+				"action":    1,
+				"timestamp": -1,
+			},
+		},
+		{
+			Keys: map[string]interface{}{
+				"userId":    1,
+				"action":    1,
+				"timestamp": -1,
+			},
+		},
+	}
+
+	// Create indexes
+	_, err := LogsCollection.Indexes().CreateMany(ctx, indexes)
+	if err != nil {
+		return err
+	}
+
+	zap.L().Info("MongoDB indexes created successfully")
+	return nil
 }
 
 func Close() error {
-	if DB != nil {
-		sqlDB, err := DB.DB()
-		if err != nil {
-			return err
+	if Client != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := Client.Disconnect(ctx); err != nil {
+			return fmt.Errorf("failed to disconnect from MongoDB: %w", err)
 		}
-		return sqlDB.Close()
+
+		zap.L().Info("Disconnected from MongoDB")
 	}
 	return nil
 }
 
+// GetCollection returns a specific collection
+func GetCollection(name string) *mongo.Collection {
+	return Database.Collection(name)
+}

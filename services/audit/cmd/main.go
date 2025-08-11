@@ -24,9 +24,9 @@ func main() {
 	logger.Init("audit-service")
 	defer logger.Sync()
 
-	// Connect to database
+	// Connect to MongoDB
 	if err := database.Connect(); err != nil {
-		zap.L().Fatal("Failed to connect to database", zap.Error(err))
+		zap.L().Fatal("Failed to connect to MongoDB", zap.Error(err))
 	}
 	defer database.Close()
 
@@ -58,6 +58,8 @@ func main() {
 		api.POST("/logs", auditHandler.CreateLog)
 		api.GET("/logs", auditHandler.GetAllLogs)
 		api.GET("/logs/user/:userId", auditHandler.GetUserLogs)
+		api.GET("/logs/analytics", auditHandler.GetLogAnalytics)
+		api.GET("/logs/search", auditHandler.SearchLogs)
 	}
 
 	// Health check
@@ -111,4 +113,3 @@ func main() {
 
 	zap.L().Info("Server exited")
 }
-

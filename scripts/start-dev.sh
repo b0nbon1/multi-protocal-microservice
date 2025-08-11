@@ -26,8 +26,8 @@ if [ ! -f .env ]; then
     echo "✅ Created .env file. Please review and update as needed."
 fi
 
-echo "🐘 Starting infrastructure services (Databases, Redis, RabbitMQ)..."
-docker-compose up -d postgres-auth postgres-contract postgres-payment postgres-dispute postgres-audit redis rabbitmq
+echo "🐘 Starting infrastructure services (Databases, MongoDB, Redis, RabbitMQ)..."
+docker-compose up -d postgres-auth postgres-contract postgres-payment postgres-dispute mongodb-audit redis rabbitmq
 
 echo "⏳ Waiting for databases to be ready..."
 sleep 10
@@ -39,7 +39,7 @@ for i in {1..30}; do
        docker-compose exec -T postgres-contract pg_isready -U postgres > /dev/null 2>&1 &&
        docker-compose exec -T postgres-payment pg_isready -U postgres > /dev/null 2>&1 &&
        docker-compose exec -T postgres-dispute pg_isready -U postgres > /dev/null 2>&1 &&
-       docker-compose exec -T postgres-audit pg_isready -U postgres > /dev/null 2>&1; then
+       docker-compose exec -T mongodb-audit mongosh --eval "db.adminCommand('ping')" > /dev/null 2>&1; then
         echo "✅ All databases are ready!"
         break
     fi
@@ -95,6 +95,7 @@ echo "├── Dispute Service:  http://localhost:3004"
 echo "├── Notification:     http://localhost:8081"
 echo "├── Audit Service:    http://localhost:8082"
 echo "├── Redis:           redis://localhost:6379"
+echo "├── MongoDB:         mongodb://localhost:27017"
 echo "└── RabbitMQ:        http://localhost:15672 (admin/admin)"
 echo ""
 echo "🔗 API Gateway Health: http://localhost:8080/api/v1/health"

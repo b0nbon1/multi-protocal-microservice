@@ -21,8 +21,8 @@ A production-ready microservices architecture built with NestJS and Go, featurin
     │           │            │              │               │               │
     ▼           ▼            ▼              ▼               ▼               ▼
 ┌───────┐   ┌───────┐   ┌───────┐     ┌───────┐       ┌───────┐       ┌───────┐
-│Auth DB│   │Contract│   │Payment│     │Dispute│       │ Redis │       │Audit  │
-│       │   │  DB   │   │  DB   │     │  DB   │       │       │       │  DB   │
+│Auth DB│   │Contract│   │Payment│     │Dispute│       │ Redis │       │MongoDB│
+│(PgSQL)│   │  DB   │   │  DB   │     │  DB   │       │       │       │(Audit)│
 └───────┘   └───────┘   └───────┘     └───────┘       └───────┘       └───────┘
 ```
 
@@ -81,8 +81,8 @@ A production-ready microservices architecture built with NestJS and Go, featurin
 
 ### Audit Service (Go - Port 8082)
 - **Purpose**: Activity logging and audit trails
-- **Database**: PostgreSQL (port 5436)
-- **Features**: Action logging, user activity tracking, audit queries
+- **Database**: MongoDB (port 27017)
+- **Features**: Action logging, user activity tracking, audit queries, document-based storage
 - **Endpoints**:
   - `POST /logs` - Create audit log
   - `GET /logs/user/:userId` - Get user activity
@@ -93,6 +93,7 @@ A production-ready microservices architecture built with NestJS and Go, featurin
 - Node.js 22+ (for local development)
 - Go 1.24+ (for local development)
 - PostgreSQL (for local development)
+- MongoDB (for audit service)
 
 ## Quick Start
 
@@ -123,7 +124,7 @@ A production-ready microservices architecture built with NestJS and Go, featurin
 
 1. **Start databases**:
    ```bash
-   docker-compose up -d postgres-auth postgres-contract postgres-payment postgres-dispute postgres-audit redis rabbitmq
+   docker-compose up -d postgres-auth postgres-contract postgres-payment postgres-dispute mongodb-audit redis rabbitmq
    ```
 
 2. **Install dependencies for NestJS services**:
@@ -234,7 +235,9 @@ AUTH_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/auth_db
 CONTRACT_DATABASE_URL=postgresql://postgres:postgres@localhost:5433/contract_db
 PAYMENT_DATABASE_URL=postgresql://postgres:postgres@localhost:5434/payment_db
 DISPUTE_DATABASE_URL=postgresql://postgres:postgres@localhost:5435/dispute_db
-AUDIT_DATABASE_URL=postgres://postgres:postgres@localhost:5436/audit_db
+
+# MongoDB Configuration for Audit Service
+MONGODB_URI=mongodb://audit_user:audit_password@localhost:27017/audit_db?authSource=audit_db
 
 # Service URLs (for inter-service communication)
 AUTH_SERVICE_URL=http://localhost:3001
@@ -371,8 +374,8 @@ Auto-migration is enabled in development. For production, implement proper migra
 
 ### Common Issues
 
-1. **Port conflicts**: Ensure ports 3001-3004, 8080-8082, 5432-5436, 6379, 5672, 15672 are available
-2. **Database connection**: Check PostgreSQL containers are running and accessible
+1. **Port conflicts**: Ensure ports 3001-3004, 8080-8082, 5432-5435, 27017, 6379, 5672, 15672 are available
+2. **Database connection**: Check PostgreSQL and MongoDB containers are running and accessible
 3. **JWT errors**: Ensure JWT_SECRET is consistent across all services
 4. **CORS issues**: Check CORS configuration in each service
 5. **WebSocket connection**: Ensure no proxy/firewall blocking WebSocket connections

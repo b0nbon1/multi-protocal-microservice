@@ -44,4 +44,3 @@ func ErrorHandler() gin.HandlerFunc {
 		}
 	}
 }
-

@@ -1,0 +1,298 @@
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Dependencies
+node_modules/
+vendor/
+
+# Build outputs
+dist/
+build/
+out/
+target/
+
+# Go specific
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+.DS_Store
+
+# Go build cache
+go/pkg/mod/
+go/bin/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.vim/
+.emacs.d/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Docker
+.dockerignore
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# MongoDB
+data/
+
+# PostgreSQL
+*.dump
+*.sql
+
+# Redis dump files
+dump.rdb
+
+# Go modules
+go.sum
+
+# Compiled binaries
+bin/
+*.bin
+
+# Test files
+test-results/
+coverage.out
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Certificate files
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+
+# Local development files
+local/
+.local/
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Visual Studio Code
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+.history/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+Session.vim
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# MacOS
+.AppleDouble
+.LSOverride
+Icon
+
+# Windows
+ehthumbs_vista.db
+*.stackdump
+
+# Linux
+*~
+
+# Archives
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Ignore any additional local config files
+config.local.json
+config.local.js
+config.local.ts
+
+# Ignore any secrets or keys
+secrets/
+keys/
+*.secret
+*.private
+
+# Ignore any compiled TypeScript
+*.js.map
+
+# Ignore any generated files
+generated/
+auto-generated/
+
+# Ignore any vendor directories
+vendor/
+
+# Ignore any cache directories
+.cache/
+cache/
+
+# Ignore any temporary files
+*.tmp
+*.temp
+
+# Ignore any lock files that shouldn't be committed
+package-lock.json
+
+# Specific to this project
+# Ignore any local development overrides
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Ignore any migration files that are auto-generated
+migrations/*.js
+migrations/*.js.map
+
+# Ignore any transpiled TypeScript in services
+services/*/dist/
+services/*/build/
+
+# Ignore any service-specific logs
+services/*/logs/
+gateway/logs/
+
+# Ignore any local database data
+data/
+postgres-data/
+mongodb-data/
+redis-data/
+
+# Ignore any compiled Go binaries in services
+services/*/cmd/main
+services/audit/cmd/audit
+services/notification/cmd/notification
+gateway/cmd/gateway
+
+# Ignore any test coverage reports
+services/*/coverage/
+gateway/coverage/
+
+# Ignore any profiling files
+*.prof
+*.pprof
+
+# Ignore any benchmark files
+*.bench
+
+# Ignore any heap dumps
+*.hprof
+
+# Ignore any core dumps
+core.*
+
+# Ignore any memory dumps
+*.dmp

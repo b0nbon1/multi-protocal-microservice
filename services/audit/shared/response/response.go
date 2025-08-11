@@ -77,4 +77,3 @@ func Health(c *gin.Context, service string, version string, uptime int64) {
 		Uptime:    uptime,
 	})
 }
-

@@ -66,18 +66,19 @@ services:
       timeout: 5s
       retries: 5
 
-  postgres-audit:
-    image: postgres:15-alpine
+  mongodb-audit:
+    image: mongo:7.0-jammy
     environment:
-      POSTGRES_DB: audit_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: audit_db
     ports:
-      - "5436:5432"
+      - "27017:27017"
     volumes:
-      - postgres_audit_data:/var/lib/postgresql/data
+      - mongodb_audit_data:/data/db
+      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -223,10 +224,10 @@ services:
     ports:
       - "8082:8082"
     environment:
-      DATABASE_URL: postgres://postgres:postgres@postgres-audit:5432/audit_db?sslmode=disable
+      MONGODB_URI: mongodb://audit_user:audit_password@mongodb-audit:27017/audit_db?authSource=audit_db
       PORT: 8082
     depends_on:
-      postgres-audit:
+      mongodb-audit:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
@@ -267,7 +268,7 @@ volumes:
   postgres_contract_data:
   postgres_payment_data:
   postgres_dispute_data:
-  postgres_audit_data:
+  mongodb_audit_data:
   redis_data:
   rabbitmq_data:
 

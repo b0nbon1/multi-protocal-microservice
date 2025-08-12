@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package contract;
+
+option go_package = "api-gateway/internal/grpc/contract";
+
+service ContractService {
+  rpc CreateContract(CreateContractRequest) returns (CreateContractResponse);
+  rpc GetContract(GetContractRequest) returns (GetContractResponse);
+  rpc GetContracts(GetContractsRequest) returns (GetContractsResponse);
+  rpc UpdateContract(UpdateContractRequest) returns (UpdateContractResponse);
+  rpc DeleteContract(DeleteContractRequest) returns (DeleteContractResponse);
+}
+
+message CreateContractRequest {
+  string userId = 1;
+  string title = 2;
+  string description = 3;
+  double amount = 4;
+  string currency = 5;
+  string clientId = 6;
+  string freelancerId = 7;
+}
+
+message CreateContractResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  ContractData data = 4;
+}
+
+message GetContractRequest {
+  string contractId = 1;
+  string userId = 2;
+}
+
+message GetContractResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  ContractData data = 4;
+}
+
+message GetContractsRequest {
+  string userId = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message GetContractsResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  repeated ContractData data = 4;
+  int32 total = 5;
+}
+
+message UpdateContractRequest {
+  string contractId = 1;
+  string userId = 2;
+  string title = 3;
+  string description = 4;
+  double amount = 5;
+  string status = 6;
+}
+
+message UpdateContractResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  ContractData data = 4;
+}
+
+message DeleteContractRequest {
+  string contractId = 1;
+  string userId = 2;
+}
+
+message DeleteContractResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+}
+
+message ContractData {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  double amount = 4;
+  string currency = 5;
+  string status = 6;
+  string clientId = 7;
+  string freelancerId = 8;
+  string createdAt = 9;
+  string updatedAt = 10;
+}

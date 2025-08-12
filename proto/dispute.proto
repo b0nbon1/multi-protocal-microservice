@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package dispute;
+
+option go_package = "api-gateway/internal/grpc/dispute";
+
+service DisputeService {
+  rpc CreateDispute(CreateDisputeRequest) returns (CreateDisputeResponse);
+  rpc GetDispute(GetDisputeRequest) returns (GetDisputeResponse);
+  rpc GetDisputes(GetDisputesRequest) returns (GetDisputesResponse);
+  rpc UpdateDispute(UpdateDisputeRequest) returns (UpdateDisputeResponse);
+  rpc ResolveDispute(ResolveDisputeRequest) returns (ResolveDisputeResponse);
+}
+
+message CreateDisputeRequest {
+  string userId = 1;
+  string contractId = 2;
+  string title = 3;
+  string description = 4;
+  string category = 5;
+}
+
+message CreateDisputeResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  DisputeData data = 4;
+}
+
+message GetDisputeRequest {
+  string disputeId = 1;
+  string userId = 2;
+}
+
+message GetDisputeResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  DisputeData data = 4;
+}
+
+message GetDisputesRequest {
+  string userId = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message GetDisputesResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  repeated DisputeData data = 4;
+  int32 total = 5;
+}
+
+message UpdateDisputeRequest {
+  string disputeId = 1;
+  string userId = 2;
+  string title = 3;
+  string description = 4;
+  string status = 5;
+}
+
+message UpdateDisputeResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  DisputeData data = 4;
+}
+
+message ResolveDisputeRequest {
+  string disputeId = 1;
+  string resolverId = 2;
+  string resolution = 3;
+  string outcome = 4;
+}
+
+message ResolveDisputeResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  DisputeData data = 4;
+}
+
+message DisputeData {
+  string id = 1;
+  string contractId = 2;
+  string clientId = 3;
+  string freelancerId = 4;
+  string title = 5;
+  string description = 6;
+  string category = 7;
+  string status = 8;
+  string resolution = 9;
+  string outcome = 10;
+  string resolverId = 11;
+  string createdAt = 12;
+  string updatedAt = 13;
+}

@@ -1,22 +1,26 @@
 # ESCROW Microservices Architecture
 
-A production-ready microservices architecture built with NestJS and Go, featuring authentication, contract management, payments, disputes, notifications, and audit logging.
+A production-ready microservices architecture built with NestJS and Go, featuring authentication, contract management, payments, disputes, notifications, and audit logging. The architecture uses **gRPC** for inter-service communication for improved performance and type safety.
 
 ## Architecture Overview
 
 ```
-┌─────────────────┐
-│   API Gateway   │
-│    (Go:8080)    │
-└─────────┬───────┘
-          │
-    ┌─────┴─────┐
-    │           │
-    ▼           ▼
+┌─────────────────────┐
+│   API Gateway       │
+│   (Go:8080)         │
+│   HTTP → gRPC       │
+└─────────┬───────────┘
+          │ gRPC Communication
+    ┌─────┴─────┐────────────┐─────────────┐
+    │           │            |             |
+    ▼           ▼            ▼             ▼
 ┌───────┐   ┌───────┐   ┌──────────┐   ┌─────────┐   ┌──────────────┐   ┌───────┐
 │ Auth  │   │Contract│   │ Payment  │   │Dispute  │   │Notification  │   │ Audit │
 │Service│   │Service │   │ Service  │   │Service  │   │   Service    │   │Service│
-│(3001) │   │ (3002) │   │  (3003)  │   │ (3004)  │   │    (8081)    │   │(8082) │
+│HTTP:  │   │HTTP:   │   │ HTTP:    │   │HTTP:    │   │  HTTP: 8081  │   │HTTP:  │
+│3001   │   │3002    │   │ 3003     │   │3004     │   │  gRPC: 50055 │   │8082   │
+│gRPC:  │   │gRPC:   │   │ gRPC:    │   │gRPC:    │   │              │   │gRPC:  │
+│50051  │   │50052   │   │ 50053    │   │50054    │   │              │   │50056  │
 └───┬───┘   └───┬───┘   └────┬─────┘   └────┬────┘   └──────┬───────┘   └───┬───┘
     │           │            │              │               │               │
     ▼           ▼            ▼              ▼               ▼               ▼
@@ -26,64 +30,111 @@ A production-ready microservices architecture built with NestJS and Go, featurin
 └───────┘   └───────┘   └───────┘     └───────┘       └───────┘       └───────┘
 ```
 
+## gRPC Communication
+
+The microservices communicate with each other using gRPC, which provides:
+- **Better Performance**: Binary protocol vs JSON/HTTP
+- **Type Safety**: Protocol Buffers schema validation
+- **Streaming Support**: Bidirectional streaming capabilities
+- **Language Agnostic**: Generated clients for Go and TypeScript
+
+### Protocol Buffers (Proto Files)
+
+Located in the `/proto` directory:
+- `auth.proto` - Authentication service definitions
+- `contract.proto` - Contract service definitions  
+- `payment.proto` - Payment service definitions
+- `dispute.proto` - Dispute service definitions
+- `notification.proto` - Notification service definitions
+- `audit.proto` - Audit service definitions
+
+### Shared Microservice Module
+
+All NestJS services use a shared microservice module located at:
+- `/shared/nestjs/modules/microservice/` - Common gRPC utilities, decorators, and interfaces
+
 ## Services
 
-### API Gateway (Go - Port 8080)
-- **Purpose**: Central entry point for all client requests
-- **Features**: JWT authentication, request routing, audit logging
+### API Gateway (Go - HTTP: 8080)
+- **Purpose**: Central entry point for all client requests, converts HTTP to gRPC
+- **Features**: JWT authentication, gRPC client management, request routing, audit logging
+- **Communication**: Uses gRPC clients to communicate with all microservices
 - **Endpoints**:
   - `GET /api/v1/health` - Health check
-  - `POST /api/v1/auth/*` - Authentication routes (no auth required)
-  - `GET|POST|PUT|DELETE /api/v1/*` - Protected routes (auth required)
+  - `POST /api/v1/auth/register` - User registration
+  - `POST /api/v1/auth/login` - User login
+  - `POST /api/v1/auth/validate` - Token validation
+  - `GET /api/v1/users/:userId` - Get user profile
+  - `POST /api/v1/contracts` - Create contract
+  - `GET /api/v1/contracts` - List contracts
+  - `GET /api/v1/contracts/:id` - Get contract details
+  - `POST /api/v1/wallets` - Create wallet
+  - `POST /api/v1/transfers` - Create transfer
+  - `POST /api/v1/disputes` - Create dispute
+  - `GET /api/v1/notifications` - Get notifications
+  - `PUT /api/v1/notifications/:id/read` - Mark notification as read
+  - `GET /api/v1/audit/logs` - Get audit logs
 
-### Auth Service (NestJS - Port 3001)
+### Auth Service (NestJS - HTTP: 3001, gRPC: 50051)
 - **Purpose**: User authentication and management
 - **Database**: PostgreSQL (port 5432)
 - **Features**: User registration, login, JWT tokens, password hashing
-- **Endpoints**:
+- **Communication**: Exposes both HTTP REST API and gRPC interface
+- **gRPC Methods**: Register, Login, ValidateToken, GetUser, UpdateUser
+- **HTTP Endpoints**:
   - `POST /auth/register` - Register new user
   - `POST /auth/login` - Login user
   - `GET /users/:id` - Get user by ID
 
-### Contract Service (NestJS - Port 3002)
+### Contract Service (NestJS - HTTP: 3002, gRPC: 50052)
 - **Purpose**: Contract creation and management
-- **Database**: PostgreSQL (port 5433)
+- **Database**: PostgreSQL (port 5432)
 - **Features**: CRUD operations for contracts, user authorization
-- **Endpoints**:
+- **Communication**: Exposes both HTTP REST API and gRPC interface
+- **gRPC Methods**: CreateContract, GetContract, GetContracts, UpdateContract, DeleteContract
+- **HTTP Endpoints**:
   - `POST /contracts` - Create contract
   - `GET /contracts/:id` - Get contract
   - `GET /contracts/user/:userId` - List user's contracts
 
-### Payment Service (NestJS - Port 3003)
+### Payment Service (NestJS - HTTP: 3003, gRPC: 50053)
 - **Purpose**: Wallet and payment management
-- **Database**: PostgreSQL (port 5434)
+- **Database**: PostgreSQL (port 5432)
 - **Features**: Digital wallets, deposits, transfers, transaction history
-- **Endpoints**:
+- **Communication**: Exposes both HTTP REST API and gRPC interface
+- **gRPC Methods**: CreateWallet, GetWallet, UpdateWallet, CreateTransfer, GetTransactions, GetTransaction
+- **HTTP Endpoints**:
   - `GET /wallets/:userId` - Get wallet balance
   - `POST /wallets/deposit` - Add funds
   - `POST /transfers` - Transfer between users
 
-### Dispute Service (NestJS - Port 3004)
+### Dispute Service (NestJS - HTTP: 3004, gRPC: 50054)
 - **Purpose**: Dispute management for contracts
-- **Database**: PostgreSQL (port 5435)
+- **Database**: PostgreSQL (port 5432)
 - **Features**: Create disputes, resolution workflow
-- **Endpoints**:
+- **Communication**: Exposes both HTTP REST API and gRPC interface
+- **gRPC Methods**: CreateDispute, GetDispute, GetDisputes, UpdateDispute, ResolveDispute
+- **HTTP Endpoints**:
   - `POST /disputes` - Create dispute
   - `GET /disputes/:id` - Get dispute
   - `PUT /disputes/:id/resolve` - Resolve dispute
 
-### Notification Service (Go - Port 8081)
-- **Purpose**: Real-time notifications via WebSocket
+### Notification Service (Go - HTTP: 8081, gRPC: 50055)
+- **Purpose**: Real-time notifications via WebSocket and gRPC
 - **Features**: WebSocket connections, real-time messaging, connection management
-- **Endpoints**:
+- **Communication**: Exposes both HTTP/WebSocket API and gRPC interface
+- **gRPC Methods**: SendNotification, GetNotifications, MarkAsRead
+- **HTTP Endpoints**:
   - `GET /ws` - WebSocket endpoint
   - `POST /notify` - Send notification
 
-### Audit Service (Go - Port 8082)
+### Audit Service (Go - HTTP: 8082, gRPC: 50056)
 - **Purpose**: Activity logging and audit trails
 - **Database**: MongoDB (port 27017)
 - **Features**: Action logging, user activity tracking, audit queries, document-based storage
-- **Endpoints**:
+- **Communication**: Exposes both HTTP REST API and gRPC interface
+- **gRPC Methods**: CreateLog, GetLogs, GetLogsByUser
+- **HTTP Endpoints**:
   - `POST /logs` - Create audit log
   - `GET /logs/user/:userId` - Get user activity
 
@@ -94,6 +145,8 @@ A production-ready microservices architecture built with NestJS and Go, featurin
 - Go 1.24+ (for local development)
 - PostgreSQL (for local development)
 - MongoDB (for audit service)
+- Protocol Buffers (protoc) - for generating gRPC code
+- gRPC tooling for Go and TypeScript
 
 ## Quick Start
 
@@ -339,11 +392,41 @@ All services expose health check endpoints:
 
 ## Development
 
+### Protocol Buffers (gRPC) Development
+
+1. **Install gRPC dependencies**:
+   ```bash
+   # Install dependencies for all NestJS services
+   make proto-deps
+   ```
+
+2. **Generate gRPC code from proto files**:
+   ```bash
+   # Generate Go and TypeScript gRPC code
+   make proto-gen
+   ```
+
+3. **Modify proto files**: Edit files in `/proto` directory when:
+   - Adding new service methods
+   - Changing message structures
+   - Adding new services
+
+4. **After proto changes**: Always regenerate code and restart services
+   ```bash
+   make proto-gen
+   docker-compose restart
+   ```
+
+5. **Clean generated files** (if needed):
+   ```bash
+   make proto-clean
+   ```
+
 ### Adding New Features
 
-1. **New endpoints**: Add to respective service controllers
+1. **New endpoints**: Add to respective service controllers and gRPC handlers
 2. **New entities**: Create entities and run migrations
-3. **Inter-service communication**: Use HTTP clients or message queues
+3. **Inter-service communication**: Use gRPC clients through the API gateway
 4. **Real-time features**: Use WebSocket service for notifications
 
 ### Database Migrations

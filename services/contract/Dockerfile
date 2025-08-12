@@ -4,11 +4,11 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+COPY services/contract/package*.json ./
+RUN npm ci && npm cache clean --force
 
 # Copy source code
-COPY . .
+COPY services/contract/ .
 
 # Build application
 RUN npm run build
@@ -26,7 +26,7 @@ RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nestjs -u 1001
 
 # Copy package files and install production dependencies
-COPY package*.json ./
+COPY services/contract/package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
 # Copy built application from builder stage

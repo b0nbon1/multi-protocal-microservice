@@ -7,6 +7,12 @@ export class RegisterDto {
   @IsString()
   @MinLength(6)
   password: string;
+
+  @IsString()
+  firstName: string;
+
+  @IsString()
+  lastName: string;
 }
 
 export class LoginDto {
@@ -22,6 +28,8 @@ export class AuthResponseDto {
   user: {
     id: string;
     email: string;
+    firstName: string;
+    lastName: string;
     createdAt: Date;
   };
 }

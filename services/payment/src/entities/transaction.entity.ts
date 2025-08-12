@@ -6,7 +6,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { TransactionType } from '../../../../shared/types/common.types';
+import { TransactionType } from '../types/common.types';
 import { Wallet } from './wallet.entity';
 
 @Entity('transactions')

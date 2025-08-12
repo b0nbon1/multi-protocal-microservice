@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "api-gateway/internal/grpc/auth";
+
+service AuthService {
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+}
+
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+  string firstName = 3;
+  string lastName = 4;
+}
+
+message RegisterResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  UserData data = 4;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  LoginData data = 4;
+}
+
+message LoginData {
+  string accessToken = 1;
+  UserData user = 2;
+}
+
+message ValidateTokenRequest {
+  string token = 1;
+}
+
+message ValidateTokenResponse {
+  bool valid = 1;
+  string userId = 2;
+  string email = 3;
+}
+
+message GetUserRequest {
+  string userId = 1;
+}
+
+message GetUserResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  UserData data = 4;
+}
+
+message UpdateUserRequest {
+  string userId = 1;
+  string firstName = 2;
+  string lastName = 3;
+  string email = 4;
+}
+
+message UpdateUserResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  UserData data = 4;
+}
+
+message UserData {
+  string id = 1;
+  string email = 2;
+  string firstName = 3;
+  string lastName = 4;
+  string createdAt = 5;
+  string updatedAt = 6;
+}

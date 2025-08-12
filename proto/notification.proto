@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package notification;
+
+option go_package = "api-gateway/internal/grpc/notification";
+
+service NotificationService {
+  rpc SendNotification(SendNotificationRequest) returns (SendNotificationResponse);
+  rpc GetNotifications(GetNotificationsRequest) returns (GetNotificationsResponse);
+  rpc MarkAsRead(MarkAsReadRequest) returns (MarkAsReadResponse);
+}
+
+message SendNotificationRequest {
+  string userId = 1;
+  string title = 2;
+  string message = 3;
+  string type = 4;
+  map<string, string> metadata = 5;
+}
+
+message SendNotificationResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  NotificationData data = 4;
+}
+
+message GetNotificationsRequest {
+  string userId = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  bool unreadOnly = 4;
+}
+
+message GetNotificationsResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  repeated NotificationData data = 4;
+  int32 total = 5;
+}
+
+message MarkAsReadRequest {
+  string notificationId = 1;
+  string userId = 2;
+}
+
+message MarkAsReadResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+}
+
+message NotificationData {
+  string id = 1;
+  string userId = 2;
+  string title = 3;
+  string message = 4;
+  string type = 5;
+  bool read = 6;
+  map<string, string> metadata = 7;
+  string createdAt = 8;
+  string updatedAt = 9;
+}

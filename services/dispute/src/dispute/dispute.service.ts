@@ -8,7 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Dispute } from '../entities/dispute.entity';
 import { CreateDisputeDto, ResolveDisputeDto, UpdateDisputeDto } from '../dto/dispute.dto';
-import { DisputeStatus } from '../../../../shared/types/common.types';
+import { DisputeStatus } from '../types/common.types';
 
 @Injectable()
 export class DisputeService {

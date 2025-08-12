@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package audit;
+
+option go_package = "api-gateway/internal/grpc/audit";
+
+service AuditService {
+  rpc CreateLog(CreateLogRequest) returns (CreateLogResponse);
+  rpc GetLogs(GetLogsRequest) returns (GetLogsResponse);
+  rpc GetLogsByUser(GetLogsByUserRequest) returns (GetLogsByUserResponse);
+}
+
+message CreateLogRequest {
+  string userId = 1;
+  string action = 2;
+  string resource = 3;
+  map<string, string> metadata = 4;
+  string ipAddress = 5;
+  string userAgent = 6;
+}
+
+message CreateLogResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  LogData data = 4;
+}
+
+message GetLogsRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string action = 3;
+  string resource = 4;
+  string startDate = 5;
+  string endDate = 6;
+}
+
+message GetLogsResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  repeated LogData data = 4;
+  int32 total = 5;
+}
+
+message GetLogsByUserRequest {
+  string userId = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  string startDate = 4;
+  string endDate = 5;
+}
+
+message GetLogsByUserResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  repeated LogData data = 4;
+  int32 total = 5;
+}
+
+message LogData {
+  string id = 1;
+  string userId = 2;
+  string action = 3;
+  string resource = 4;
+  map<string, string> metadata = 5;
+  string ipAddress = 6;
+  string userAgent = 7;
+  string createdAt = 8;
+}

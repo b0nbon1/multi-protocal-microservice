@@ -1,5 +1,5 @@
 import { IsString, IsUUID, IsNumber, IsEnum, IsOptional, Min } from 'class-validator';
-import { ContractStatus } from '../../../../shared/types/common.types';
+import { ContractStatus } from '../types/common.types';
 
 export class CreateContractDto {
   @IsUUID()

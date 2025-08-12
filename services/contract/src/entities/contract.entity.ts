@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { ContractStatus } from '../../../../shared/types/common.types';
+import { ContractStatus } from '../types/common.types';
 
 @Entity('contracts')
 export class Contract {

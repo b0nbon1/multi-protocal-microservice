@@ -1,8 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { Transport, MicroserviceOptions } from '@nestjs/microservices';
+import { join } from 'path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  // Create HTTP application
   const app = await NestFactory.create(AppModule);
 
   // Global validation pipe
@@ -18,26 +21,44 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Set global prefix
+  // Set global prefix for HTTP endpoints
   app.setGlobalPrefix('api/v1');
 
-  const port = process.env.PORT || 3004;
+  const httpPort = process.env.PORT || 3004;
+  const grpcPort = process.env.GRPC_PORT || 50054;
+
+  // Create gRPC microservice
+  const grpcApp = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
+    transport: Transport.GRPC,
+    options: {
+      package: 'dispute',
+      protoPath: join(__dirname, '../../../proto/dispute.proto'),
+      url: `0.0.0.0:${grpcPort}`,
+    },
+  });
+
+  // Start gRPC microservice
+  await grpcApp.listen();
+  console.log(`Dispute gRPC Service is running on port ${grpcPort}`);
   
   // Graceful shutdown
   process.on('SIGTERM', async () => {
     console.log('SIGTERM received, shutting down gracefully');
     await app.close();
+    await grpcApp.close();
     process.exit(0);
   });
 
   process.on('SIGINT', async () => {
     console.log('SIGINT received, shutting down gracefully');
     await app.close();
+    await grpcApp.close();
     process.exit(0);
   });
 
-  await app.listen(port);
-  console.log(`Dispute Service is running on port ${port}`);
+  // Start HTTP server
+  await app.listen(httpPort);
+  console.log(`Dispute HTTP Service is running on port ${httpPort}`);
 }
 
 bootstrap();

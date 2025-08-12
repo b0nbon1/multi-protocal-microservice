@@ -20,7 +20,7 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-    const { email, password } = registerDto;
+    const { email, password, firstName, lastName } = registerDto;
 
     // Check if user already exists
     const existingUser = await this.userRepository.findOne({
@@ -38,6 +38,8 @@ export class AuthService {
     const user = this.userRepository.create({
       email,
       password: hashedPassword,
+      firstName,
+      lastName,
     });
 
     const savedUser = await this.userRepository.save(user);
@@ -51,14 +53,14 @@ export class AuthService {
       user: {
         id: savedUser.id,
         email: savedUser.email,
+        firstName: savedUser.firstName,
+        lastName: savedUser.lastName,
         createdAt: savedUser.createdAt,
       },
     };
   }
 
-  async login(loginDto: LoginDto): Promise<AuthResponseDto> {
-    const { email, password } = loginDto;
-
+  async login(email: string, password: string): Promise<AuthResponseDto> {
     // Find user
     const user = await this.userRepository.findOne({
       where: { email },
@@ -83,9 +85,15 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
         createdAt: user.createdAt,
       },
     };
+  }
+
+  async loginWithDto(loginDto: LoginDto): Promise<AuthResponseDto> {
+    return this.login(loginDto.email, loginDto.password);
   }
 
   async findById(id: string): Promise<User> {
@@ -110,6 +118,23 @@ export class AuthService {
       return result;
     }
     return null;
+  }
+
+  async validateToken(token: string): Promise<any> {
+    try {
+      const payload = this.jwtService.verify(token);
+      return payload;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async updateUser(userId: string, updateData: Partial<User>): Promise<User> {
+    const user = await this.findById(userId);
+    
+    Object.assign(user, updateData);
+    
+    return await this.userRepository.save(user);
   }
 }
 

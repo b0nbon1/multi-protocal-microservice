@@ -1,0 +1,114 @@
+syntax = "proto3";
+
+package payment;
+
+option go_package = "api-gateway/internal/grpc/payment";
+
+service PaymentService {
+  rpc CreateWallet(CreateWalletRequest) returns (CreateWalletResponse);
+  rpc GetWallet(GetWalletRequest) returns (GetWalletResponse);
+  rpc UpdateWallet(UpdateWalletRequest) returns (UpdateWalletResponse);
+  rpc CreateTransfer(CreateTransferRequest) returns (CreateTransferResponse);
+  rpc GetTransactions(GetTransactionsRequest) returns (GetTransactionsResponse);
+  rpc GetTransaction(GetTransactionRequest) returns (GetTransactionResponse);
+}
+
+message CreateWalletRequest {
+  string userId = 1;
+  string currency = 2;
+}
+
+message CreateWalletResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  WalletData data = 4;
+}
+
+message GetWalletRequest {
+  string userId = 1;
+  string walletId = 2;
+}
+
+message GetWalletResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  WalletData data = 4;
+}
+
+message UpdateWalletRequest {
+  string walletId = 1;
+  string userId = 2;
+  double balance = 3;
+}
+
+message UpdateWalletResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  WalletData data = 4;
+}
+
+message CreateTransferRequest {
+  string fromUserId = 1;
+  string toUserId = 2;
+  double amount = 3;
+  string currency = 4;
+  string description = 5;
+}
+
+message CreateTransferResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  TransactionData data = 4;
+}
+
+message GetTransactionsRequest {
+  string userId = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message GetTransactionsResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  repeated TransactionData data = 4;
+  int32 total = 5;
+}
+
+message GetTransactionRequest {
+  string transactionId = 1;
+  string userId = 2;
+}
+
+message GetTransactionResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+  TransactionData data = 4;
+}
+
+message WalletData {
+  string id = 1;
+  string userId = 2;
+  double balance = 3;
+  string currency = 4;
+  string createdAt = 5;
+  string updatedAt = 6;
+}
+
+message TransactionData {
+  string id = 1;
+  string fromUserId = 2;
+  string toUserId = 3;
+  double amount = 4;
+  string currency = 5;
+  string status = 6;
+  string type = 7;
+  string description = 8;
+  string createdAt = 9;
+  string updatedAt = 10;
+}

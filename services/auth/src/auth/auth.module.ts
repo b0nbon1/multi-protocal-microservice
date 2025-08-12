@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController, UsersController } from './auth.controller';
+// import { AuthGrpcController } from './auth.grpc.controller'; // Temporarily disabled
 import { User } from '../entities/user.entity';
 import { JwtStrategy } from './jwt.strategy';
 
@@ -16,7 +17,7 @@ import { JwtStrategy } from './jwt.strategy';
       signOptions: { expiresIn: '24h' },
     }),
   ],
-  controllers: [AuthController, UsersController],
+  controllers: [AuthController, UsersController], // AuthGrpcController temporarily disabled
   providers: [AuthService, JwtStrategy],
   exports: [AuthService],
 })

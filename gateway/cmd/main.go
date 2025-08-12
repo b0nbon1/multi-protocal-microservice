@@ -13,9 +13,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
+	grpcClients "api-gateway/internal/grpc"
 	"api-gateway/internal/handlers"
 	authMiddleware "api-gateway/internal/middleware"
-	"api-gateway/internal/proxy"
 	"api-gateway/shared/logger"
 	"api-gateway/shared/middleware"
 )
@@ -30,18 +30,25 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// Service configuration
-	serviceConfig := proxy.ServiceConfig{
-		AuthServiceURL:         getEnv("AUTH_SERVICE_URL", "http://localhost:3001"),
-		ContractServiceURL:     getEnv("CONTRACT_SERVICE_URL", "http://localhost:3002"),
-		PaymentServiceURL:      getEnv("PAYMENT_SERVICE_URL", "http://localhost:3003"),
-		DisputeServiceURL:      getEnv("DISPUTE_SERVICE_URL", "http://localhost:3004"),
-		NotificationServiceURL: getEnv("NOTIFICATION_SERVICE_URL", "http://localhost:8081"),
-		AuditServiceURL:        getEnv("AUDIT_SERVICE_URL", "http://localhost:8082"),
+	// gRPC Service configuration
+	grpcConfig := grpcClients.GRPCConfig{
+		AuthServiceAddr:         getEnv("AUTH_GRPC_ADDR", "localhost:50051"),
+		ContractServiceAddr:     getEnv("CONTRACT_GRPC_ADDR", "localhost:50052"),
+		PaymentServiceAddr:      getEnv("PAYMENT_GRPC_ADDR", "localhost:50053"),
+		DisputeServiceAddr:      getEnv("DISPUTE_GRPC_ADDR", "localhost:50054"),
+		NotificationServiceAddr: getEnv("NOTIFICATION_GRPC_ADDR", "localhost:50055"),
+		AuditServiceAddr:        getEnv("AUDIT_GRPC_ADDR", "localhost:50056"),
 	}
 
+	// Initialize gRPC clients
+	grpcClientManager, err := grpcClients.NewGRPCClients(grpcConfig)
+	if err != nil {
+		zap.L().Fatal("Failed to initialize gRPC clients", zap.Error(err))
+	}
+	defer grpcClientManager.Close()
+
 	// Initialize handlers
-	proxyHandler := proxy.NewProxyHandler(serviceConfig)
+	grpcProxyHandler := grpcClients.NewGRPCProxyHandler(grpcClientManager)
 	healthHandler := handlers.NewHealthHandler()
 
 	// Setup router
@@ -64,8 +71,9 @@ func main() {
 	// Auth routes (no authentication required)
 	authGroup := router.Group("/api/v1/auth")
 	{
-		authGroup.POST("/register", proxyHandler.ProxyRequest(serviceConfig.AuthServiceURL+"/api/v1"))
-		authGroup.POST("/login", proxyHandler.ProxyRequest(serviceConfig.AuthServiceURL+"/api/v1"))
+		authGroup.POST("/register", grpcProxyHandler.Register)
+		authGroup.POST("/login", grpcProxyHandler.Login)
+		authGroup.POST("/validate", grpcProxyHandler.ValidateToken)
 	}
 
 	// Protected routes (authentication required)
@@ -73,36 +81,27 @@ func main() {
 	protected.Use(authMiddleware.AuthMiddleware())
 	{
 		// User routes
-		protected.GET("/users/*path", proxyHandler.ProxyRequest(serviceConfig.AuthServiceURL+"/api/v1"))
+		protected.GET("/users/:userId", grpcProxyHandler.GetUser)
 
 		// Contract routes
-		protected.POST("/contracts", proxyHandler.ProxyRequest(serviceConfig.ContractServiceURL+"/api/v1"))
-		protected.GET("/contracts/*path", proxyHandler.ProxyRequest(serviceConfig.ContractServiceURL+"/api/v1"))
-		protected.PUT("/contracts/*path", proxyHandler.ProxyRequest(serviceConfig.ContractServiceURL+"/api/v1"))
-		protected.DELETE("/contracts/*path", proxyHandler.ProxyRequest(serviceConfig.ContractServiceURL+"/api/v1"))
+		protected.POST("/contracts", grpcProxyHandler.CreateContract)
+		protected.GET("/contracts", grpcProxyHandler.GetContracts)
+		protected.GET("/contracts/:contractId", grpcProxyHandler.GetContract)
 
 		// Payment routes
-		protected.GET("/wallets/*path", proxyHandler.ProxyRequest(serviceConfig.PaymentServiceURL+"/api/v1"))
-		protected.POST("/wallets/*path", proxyHandler.ProxyRequest(serviceConfig.PaymentServiceURL+"/api/v1"))
-		protected.POST("/transfers", proxyHandler.ProxyRequest(serviceConfig.PaymentServiceURL+"/api/v1"))
-		protected.GET("/transactions/*path", proxyHandler.ProxyRequest(serviceConfig.PaymentServiceURL+"/api/v1"))
+		protected.POST("/wallets", grpcProxyHandler.CreateWallet)
+		protected.POST("/transfers", grpcProxyHandler.CreateTransfer)
 
 		// Dispute routes
-		protected.POST("/disputes", proxyHandler.ProxyRequest(serviceConfig.DisputeServiceURL+"/api/v1"))
-		protected.GET("/disputes/*path", proxyHandler.ProxyRequest(serviceConfig.DisputeServiceURL+"/api/v1"))
-		protected.PUT("/disputes/*path", proxyHandler.ProxyRequest(serviceConfig.DisputeServiceURL+"/api/v1"))
-		protected.DELETE("/disputes/*path", proxyHandler.ProxyRequest(serviceConfig.DisputeServiceURL+"/api/v1"))
+		protected.POST("/disputes", grpcProxyHandler.CreateDispute)
 
 		// Notification routes
-		protected.POST("/notifications/*path", proxyHandler.ProxyRequest(serviceConfig.NotificationServiceURL+"/api/v1"))
-		protected.GET("/notifications/*path", proxyHandler.ProxyRequest(serviceConfig.NotificationServiceURL+"/api/v1"))
+		protected.GET("/notifications", grpcProxyHandler.GetNotifications)
+		protected.PUT("/notifications/:notificationId/read", grpcProxyHandler.MarkNotificationAsRead)
 
 		// Audit routes (admin only in real implementation)
-		protected.GET("/audit/*path", proxyHandler.ProxyRequest(serviceConfig.AuditServiceURL+"/api/v1"))
+		protected.GET("/audit/logs", grpcProxyHandler.GetAuditLogs)
 	}
-
-	// WebSocket routes (no auth middleware for simplicity)
-	router.GET("/ws", proxyHandler.ProxyRequest(serviceConfig.NotificationServiceURL))
 
 	// Get port from environment
 	port := getEnv("PORT", "8080")
@@ -156,4 +155,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-

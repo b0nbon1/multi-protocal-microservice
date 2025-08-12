@@ -1,5 +1,5 @@
 import { IsString, IsUUID, IsNumber, IsEnum, IsOptional, Min } from 'class-validator';
-import { TransactionType } from '../../../../shared/types/common.types';
+import { TransactionType } from '../types/common.types';
 
 export class DepositDto {
   @IsUUID()

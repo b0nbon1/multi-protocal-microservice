@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { DisputeStatus } from '../../../../shared/types/common.types';
+import { DisputeStatus } from '../types/common.types';
 
 @Entity('disputes')
 export class Dispute {

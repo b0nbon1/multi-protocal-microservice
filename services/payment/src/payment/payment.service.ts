@@ -8,7 +8,7 @@ import { Repository, DataSource } from 'typeorm';
 import { Wallet } from '../entities/wallet.entity';
 import { Transaction } from '../entities/transaction.entity';
 import { DepositDto, TransferDto } from '../dto/payment.dto';
-import { TransactionType } from '../../../../shared/types/common.types';
+import { TransactionType } from '../types/common.types';
 
 @Injectable()
 export class PaymentService {

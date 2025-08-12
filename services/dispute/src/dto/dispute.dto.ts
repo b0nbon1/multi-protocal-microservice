@@ -1,5 +1,5 @@
 import { IsString, IsUUID, IsEnum, IsOptional } from 'class-validator';
-import { DisputeStatus } from '../../../../shared/types/common.types';
+import { DisputeStatus } from '../types/common.types';
 
 export class CreateDisputeDto {
   @IsUUID()
